@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>News — mvmetrics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared.css">
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="../index.html"><span>mvmetrics</span><span class="pkg-badge">v0.1.0</span></a>
+  <div class="nav-links">
+    <a href="../index.html">Home</a>
+    <a href="../articles/get-started.html">Get Started</a>
+    <a href="../reference/index.html">Reference</a>
+    <a href="../articles/theory.html">Theory</a>
+    <a href="index.html" class="active">News</a>
+  </div>
+  <a class="nav-gh" href="https://github.com/darango/mvmetrics" target="_blank">GitHub</a>
+</nav>
+
+<div style="max-width:780px;margin:0 auto;padding:3rem 2rem">
+  <p class="art-kicker">Changelog</p>
+  <h1 style="font-family:var(--serif);font-size:2rem;font-weight:400;margin-bottom:2rem">News</h1>
+
+  <div style="border-left:3px solid var(--accent);padding-left:1.5rem;margin-bottom:2.5rem">
+    <div style="font-family:var(--mono);font-size:.9rem;color:var(--accent);font-weight:500;margin-bottom:.25rem">
+      mvmetrics 0.1.0
+    </div>
+    <div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:1rem">April 2026 — Initial release</div>
+    <h3 style="font-size:.88rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:.6rem;font-weight:600">New features</h3>
+    <ul style="padding-left:1.2rem;color:var(--ink-soft);font-size:.9rem;line-height:1.9">
+      <li>Five metric families (A–E) with full <strong>roxygen2</strong> documentation and examples.</li>
+      <li>Novel <strong>E-CVWMD (Metric E)</strong> with CV-derived weights and adaptive α* via multivariate distance-correlation test (<code>energy::dcov.test</code>).</li>
+      <li><code>evaluate_models()</code> — main wrapper returning scores, rankings, recommendation, and bootstrap CIs in a single call.</li>
+      <li>Non-parametric bootstrap CIs via <code>bootstrap_metrics()</code> with pairwise CI overlap test.</li>
+      <li>Four ggplot2 visualisation types via <code>plot_metrics()</code>: <code>bars</code>, <code>forest</code>, <code>heatmap</code>, <code>decomp</code>.</li>
+      <li>Rule-based <code>recommend_metric()</code> detecting scale heterogeneity, flat Metric A, and dependence signal.</li>
+      <li>20+ unit tests via <strong>testthat</strong>.</li>
+      <li>Calibrated simulation example (<code>use_simulation.R</code>) with Valle del Cauca Clausius-Clapeyron parameters.</li>
+    </ul>
+    <h3 style="font-size:.88rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:.9rem 0 .6rem;font-weight:600">Dependencies</h3>
+    <ul style="padding-left:1.2rem;color:var(--ink-soft);font-size:.9rem;line-height:1.9">
+      <li><strong>Imports:</strong> stats, utils, methods (base R only)</li>
+      <li><strong>Suggests:</strong> energy ≥ 1.7.10, ggplot2 ≥ 3.4.0, MASS, testthat, knitr</li>
+    </ul>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div><div class="pkg-name">mvmetrics</div>
+      <p>David Arango Londoño · Universidad Nacional de Colombia · 2026</p></div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../reference/index.html">Reference</a>
+      <a href="https://github.com/darango/mvmetrics">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

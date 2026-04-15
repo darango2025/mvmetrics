@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mvmetrics — Joint Performance Metrics for Multivariate Responses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #0f1923;
+    --ink-soft: #3a4a58;
+    --mist:     #f0f4f8;
+    --white:    #ffffff;
+    --accent:   #1a5276;
+    --accent2:  #c0392b;
+    --accent3:  #1e8449;
+    --gold:     #d4ac0d;
+    --border:   #dce4ec;
+    --code-bg:  #f6f8fa;
+    --mono:     'DM Mono', 'Fira Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+    --serif:    'DM Serif Display', Georgia, serif;
+    --radius:   6px;
+    --shadow:   0 2px 16px rgba(15,25,35,.09);
+    --shadow-lg:0 8px 40px rgba(15,25,35,.13);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body { font-family: var(--sans); color: var(--ink); background: var(--white);
+         line-height: 1.65; -webkit-font-smoothing: antialiased; }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 2.5rem;
+    height: 58px;
+  }
+  .nav-brand {
+    font-family: var(--mono); font-weight: 500; font-size: 1.05rem;
+    color: var(--accent); text-decoration: none; letter-spacing: -.02em;
+    display: flex; align-items: center; gap: .55rem;
+  }
+  .nav-brand .pkg-badge {
+    background: var(--accent); color: #fff;
+    font-size: .62rem; padding: .15rem .42rem; border-radius: 3px;
+    font-family: var(--mono); letter-spacing: .04em; font-weight: 500;
+  }
+  .nav-links { display: flex; gap: .1rem; margin-left: auto; }
+  .nav-links a {
+    font-size: .88rem; color: var(--ink-soft); text-decoration: none;
+    padding: .45rem .75rem; border-radius: var(--radius);
+    transition: background .15s, color .15s; font-weight: 400;
+  }
+  .nav-links a:hover { background: var(--mist); color: var(--ink); }
+  .nav-links a.active { color: var(--accent); font-weight: 500; }
+  .nav-gh {
+    display: flex; align-items: center; gap: .4rem;
+    font-family: var(--mono); font-size: .8rem;
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--border); padding: .3rem .7rem;
+    border-radius: var(--radius); transition: border-color .15s, color .15s;
+    margin-left: .5rem;
+  }
+  .nav-gh:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--ink);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 70% 40%, rgba(26,82,118,.55) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 80% at 10% 80%, rgba(192,57,43,.18) 0%, transparent 60%);
+    color: #fff;
+    padding: 5rem 2rem 4.5rem;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      90deg, rgba(255,255,255,.025) 0, rgba(255,255,255,.025) 1px,
+      transparent 1px, transparent 60px
+    ), repeating-linear-gradient(
+      0deg, rgba(255,255,255,.025) 0, rgba(255,255,255,.025) 1px,
+      transparent 1px, transparent 60px
+    );
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 860px; margin: 0 auto; position: relative; }
+  .hero-kicker {
+    font-family: var(--mono); font-size: .78rem; letter-spacing: .12em;
+    color: rgba(255,255,255,.5); text-transform: uppercase; margin-bottom: 1.2rem;
+  }
+  .hero h1 {
+    font-family: var(--serif); font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 400; line-height: 1.15; margin-bottom: 1.2rem;
+    letter-spacing: -.02em;
+  }
+  .hero h1 em { font-style: italic; color: rgba(255,255,255,.75); }
+  .hero p {
+    font-size: 1.08rem; color: rgba(255,255,255,.72); max-width: 620px;
+    line-height: 1.75; margin-bottom: 2.2rem; font-weight: 300;
+  }
+  .hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3.2rem; }
+  .btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .65rem 1.5rem; border-radius: var(--radius);
+    font-size: .9rem; font-weight: 500; text-decoration: none;
+    transition: transform .15s, box-shadow .15s, opacity .15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+  .btn-primary { background: #fff; color: var(--accent); }
+  .btn-outline { border: 1px solid rgba(255,255,255,.3); color: #fff; }
+  .btn-outline:hover { background: rgba(255,255,255,.08); }
+  .hero-install {
+    background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.1);
+    border-radius: var(--radius); padding: .9rem 1.3rem;
+    font-family: var(--mono); font-size: .88rem; color: rgba(255,255,255,.85);
+    display: inline-flex; align-items: center; gap: 1.2rem; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .hero-install:hover { border-color: rgba(255,255,255,.3); }
+  .hero-install .comment { color: rgba(255,255,255,.35); }
+  .hero-install .fn { color: #79c7ff; }
+  .hero-install .str { color: #b9f59b; }
+  .hero-copy { color: rgba(255,255,255,.4); font-size: .75rem; cursor: pointer;
+               transition: color .15s; }
+  .hero-copy:hover { color: rgba(255,255,255,.8); }
+
+  /* ── BADGES ── */
+  .hero-badges { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem; }
+  .badge {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.65); font-family: var(--mono); font-size: .72rem;
+    padding: .25rem .65rem; border-radius: 20px; letter-spacing: .03em;
+  }
+  .badge.green { background: rgba(30,132,73,.25); border-color: rgba(30,132,73,.4); color: #6ee3a0; }
+  .badge.blue  { background: rgba(26,82,118,.35); border-color: rgba(26,82,118,.5); color: #79c7ff; }
+  .badge.amber { background: rgba(212,172,13,.2); border-color: rgba(212,172,13,.35); color: #f5d76e; }
+
+  /* ── METRICS STRIP ── */
+  .metrics-strip {
+    background: var(--mist); border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem; overflow-x: auto;
+  }
+  .metrics-strip-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; gap: 1rem; align-items: stretch; justify-content: center;
+  }
+  .metric-chip {
+    flex: 1; min-width: 140px; max-width: 200px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.1rem;
+    display: flex; flex-direction: column; gap: .3rem;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .metric-chip:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+  .metric-chip .label {
+    font-family: var(--mono); font-size: .7rem; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .metric-chip .name { font-size: .88rem; font-weight: 500; color: var(--ink); }
+  .metric-chip .tag {
+    font-size: .68rem; color: var(--ink-soft); margin-top: auto;
+    font-family: var(--mono);
+  }
+  .chip-A .label { color: #7f8c8d; }
+  .chip-B .label { color: var(--accent); }
+  .chip-C .label { color: #8e44ad; }
+  .chip-D .label { color: var(--accent3); }
+  .chip-E .label { color: var(--accent2); }
+  .chip-E { border-color: rgba(192,57,43,.3); background: rgba(192,57,43,.03); }
+
+  /* ── MAIN CONTENT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── SECTION HEADINGS ── */
+  section { padding: 4rem 0; }
+  section + section { border-top: 1px solid var(--border); }
+  .section-kicker {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: .75rem;
+  }
+  h2 {
+    font-family: var(--serif); font-size: 1.9rem; font-weight: 400;
+    margin-bottom: 1rem; letter-spacing: -.02em;
+  }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .6rem; }
+  p { color: var(--ink-soft); margin-bottom: 1rem; }
+
+  /* ── FEATURE GRID ── */
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem; margin-top: 2rem;
+  }
+  .feature-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; transition: box-shadow .15s, border-color .15s;
+  }
+  .feature-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+  .feature-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; margin-bottom: 1rem;
+  }
+  .fi-blue  { background: rgba(26,82,118,.1); }
+  .fi-green { background: rgba(30,132,73,.1); }
+  .fi-red   { background: rgba(192,57,43,.1); }
+  .fi-amber { background: rgba(212,172,13,.12); }
+  .feature-card h3 { font-size: 1rem; margin-bottom: .45rem; }
+  .feature-card p { font-size: .88rem; margin-bottom: 0; }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    background: var(--ink); color: #e8edf2;
+    border-radius: var(--radius); padding: 1.5rem 1.8rem;
+    font-family: var(--mono); font-size: .84rem; line-height: 1.7;
+    overflow-x: auto; position: relative; margin: 1.5rem 0;
+  }
+  .code-block .comment { color: #6a7f8c; }
+  .code-block .fn      { color: #79c7ff; }
+  .code-block .kw      { color: #f0883e; }
+  .code-block .str     { color: #b9f59b; }
+  .code-block .num     { color: #c3e88d; }
+  .code-block .arg     { color: #c792ea; }
+  .code-block .section {
+    color: rgba(255,255,255,.25); font-size: .7rem;
+    letter-spacing: .1em; text-transform: uppercase;
+    display: block; margin: 1.2rem 0 .4rem;
+    border-top: 1px solid rgba(255,255,255,.08); padding-top: 1rem;
+  }
+  .code-block .section:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+  pre code { display: block; }
+  .copy-btn {
+    position: absolute; top: .8rem; right: .8rem;
+    background: rgba(255,255,255,.08); border: none; color: rgba(255,255,255,.4);
+    font-family: var(--mono); font-size: .7rem; padding: .3rem .6rem;
+    border-radius: 4px; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+  /* ── QUICK START TABS ── */
+  .tabs { display: flex; gap: .1rem; border-bottom: 2px solid var(--border);
+          margin-bottom: 1.5rem; }
+  .tab {
+    padding: .6rem 1.1rem; font-size: .88rem; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    color: var(--ink-soft); transition: color .15s, border-color .15s;
+    font-weight: 400;
+  }
+  .tab.active { color: var(--accent); border-color: var(--accent); font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── REFERENCE TABLE ── */
+  .ref-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: .88rem; }
+  .ref-table th {
+    text-align: left; padding: .6rem 1rem; background: var(--mist);
+    font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+    font-weight: 600; color: var(--ink-soft); border-bottom: 2px solid var(--border);
+  }
+  .ref-table td { padding: .65rem 1rem; border-bottom: 1px solid var(--border); }
+  .ref-table tr:hover td { background: var(--mist); }
+  .ref-table td:first-child {
+    font-family: var(--mono); font-size: .82rem; color: var(--accent);
+  }
+  .ref-table td a { color: var(--accent); text-decoration: none; }
+  .ref-table td a:hover { text-decoration: underline; }
+  .badge-type {
+    font-family: var(--mono); font-size: .66rem; padding: .15rem .45rem;
+    border-radius: 3px; font-weight: 500;
+  }
+  .bt-fn   { background: rgba(26,82,118,.1); color: var(--accent); }
+  .bt-cl   { background: rgba(30,132,73,.1); color: var(--accent3); }
+  .bt-data { background: rgba(212,172,13,.12); color: #7d6608; }
+
+  /* ── THEORY SECTION ── */
+  .metric-detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;
+  }
+  @media (max-width: 720px) { .metric-detail-grid { grid-template-columns: 1fr; } }
+  .metric-detail {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; position: relative; overflow: hidden;
+  }
+  .metric-detail::before {
+    content: attr(data-letter);
+    position: absolute; right: 1rem; top: .5rem;
+    font-family: var(--serif); font-size: 4rem; font-weight: 400;
+    opacity: .06; line-height: 1;
+  }
+  .metric-detail h3 { font-size: .95rem; margin-bottom: .5rem; }
+  .metric-detail .formula {
+    font-family: var(--mono); font-size: .78rem;
+    background: var(--code-bg); padding: .6rem .9rem;
+    border-radius: 4px; margin: .8rem 0; line-height: 1.8;
+    border-left: 3px solid var(--border); color: var(--ink-soft);
+  }
+  .metric-detail p { font-size: .86rem; margin-bottom: .5rem; }
+  .prop-tags { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+  .prop-tag {
+    font-size: .68rem; font-family: var(--mono); padding: .15rem .5rem;
+    border-radius: 12px; border: 1px solid;
+  }
+  .pt-proper { color: var(--accent3); border-color: var(--accent3);
+               background: rgba(30,132,73,.06); }
+  .pt-dep    { color: var(--accent); border-color: var(--accent);
+               background: rgba(26,82,118,.06); }
+  .pt-novel  { color: var(--accent2); border-color: var(--accent2);
+               background: rgba(192,57,43,.06); }
+  .pt-robust { color: #7d6608; border-color: #c7ae47; background: rgba(212,172,13,.07); }
+  .md-E { border-color: rgba(192,57,43,.3); }
+
+  /* ── CITATION ── */
+  .citation-box {
+    background: var(--mist); border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius); padding: 1.2rem 1.5rem; margin-top: 2rem;
+    font-size: .86rem;
+  }
+  .citation-box strong { display: block; margin-bottom: .4rem; font-size: .8rem;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .citation-box code { font-family: var(--mono); background: rgba(0,0,0,.04);
+    padding: .1rem .3rem; border-radius: 3px; }
+
+  /* ── NEWS SECTION ── */
+  .news-item { padding: 1.2rem 0; border-bottom: 1px solid var(--border); }
+  .news-item:last-child { border-bottom: none; }
+  .news-version {
+    font-family: var(--mono); font-size: .8rem; color: var(--accent);
+    font-weight: 500; margin-bottom: .3rem;
+  }
+  .news-date { font-size: .78rem; color: var(--ink-soft); margin-bottom: .7rem; }
+  .news-item ul { padding-left: 1.2rem; }
+  .news-item li { font-size: .88rem; color: var(--ink-soft); margin-bottom: .3rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink); color: rgba(255,255,255,.45);
+    padding: 3rem 2rem; margin-top: 0;
+  }
+  .footer-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: start;
+    flex-wrap: wrap; gap: 2rem;
+  }
+  footer .pkg-name { font-family: var(--mono); color: rgba(255,255,255,.8);
+    font-size: .95rem; margin-bottom: .5rem; }
+  footer p { font-size: .82rem; margin-bottom: 0; color: rgba(255,255,255,.4); }
+  footer a { color: rgba(255,255,255,.55); text-decoration: none; }
+  footer a:hover { color: #fff; }
+  .footer-links { display: flex; flex-direction: column; gap: .4rem; }
+  .footer-links a { font-size: .85rem; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    nav { gap: 1rem; padding: 0 1rem; }
+    .nav-links { display: none; }
+    .hero { padding: 3rem 1.2rem 3rem; }
+    .container { padding: 0 1.2rem; }
+    section { padding: 2.5rem 0; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero-inner > * { animation: fadeUp .55s ease both; }
+  .hero-inner > *:nth-child(1) { animation-delay: .05s; }
+  .hero-inner > *:nth-child(2) { animation-delay: .12s; }
+  .hero-inner > *:nth-child(3) { animation-delay: .2s; }
+  .hero-inner > *:nth-child(4) { animation-delay: .27s; }
+  .hero-inner > *:nth-child(5) { animation-delay: .33s; }
+</style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav>
+  <a class="nav-brand" href="index.html">
+    <span>mvmetrics</span>
+    <span class="pkg-badge">v0.1.0</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" class="active">Home</a>
+    <a href="articles/get-started.html">Get Started</a>
+    <a href="reference/index.html">Reference</a>
+    <a href="articles/theory.html">Theory</a>
+    <a href="news/index.html">News</a>
+  </div>
+  <a class="nav-gh" href="https://github.com/darango/mvmetrics" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+    GitHub
+  </a>
+</nav>
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-kicker">R Package · Statistical Methods · Doctoral Research</p>
+    <h1>Joint Performance Metrics<br>for <em>Mixed-Type</em> Multivariate Responses</h1>
+    <p>Evaluate models that predict continuous and binary outcomes simultaneously.
+       Five metric families — including the novel <strong>E-CVWMD</strong> — with
+       bootstrap uncertainty quantification and automated recommendations.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="articles/get-started.html">Get Started</a>
+      <a class="btn btn-outline" href="reference/index.html">Function Reference</a>
+    </div>
+    <div class="hero-install" onclick="copyInstall(this)">
+      <code>
+        <span class="comment"># Install from GitHub</span><br>
+        <span class="fn">devtools</span>::<span class="fn">install_github</span>(<span class="str">"darango/mvmetrics"</span>)
+      </code>
+      <span class="hero-copy" title="Copy to clipboard">⎘ copy</span>
+    </div>
+    <div class="hero-badges">
+      <span class="badge green">MIT License</span>
+      <span class="badge blue">R ≥ 4.0.0</span>
+      <span class="badge amber">v0.1.0</span>
+      <span class="badge">5 Metric Families</span>
+      <span class="badge">Bootstrap CIs</span>
+      <span class="badge">Novel E-CVWMD</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── METRICS STRIP ── -->
+<div class="metrics-strip">
+  <div class="metrics-strip-inner">
+    <div class="metric-chip chip-A">
+      <span class="label">A</span>
+      <span class="name">Weighted Marginal Sum</span>
+      <span class="tag">baseline · marginal</span>
+    </div>
+    <div class="metric-chip chip-B">
+      <span class="label">B</span>
+      <span class="name">Energy Score</span>
+      <span class="tag">strictly proper · joint</span>
+    </div>
+    <div class="metric-chip chip-C">
+      <span class="label">C</span>
+      <span class="name">Variogram Score</span>
+      <span class="tag">covariance-sensitive</span>
+    </div>
+    <div class="metric-chip chip-D">
+      <span class="label">D</span>
+      <span class="name">MDD Decomposition</span>
+      <span class="tag">marginal + dependence split</span>
+    </div>
+    <div class="metric-chip chip-E">
+      <span class="label">E ★</span>
+      <span class="name">E-CVWMD</span>
+      <span class="tag">novel · CV-weighted · adaptive α*</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<main>
+
+<!-- WHY mvmetrics -->
+<section>
+  <div class="container">
+    <p class="section-kicker">Why mvmetrics</p>
+    <h2>Standard metrics can't see dependence</h2>
+    <p style="max-width:640px">When your model predicts multiple variables simultaneously,
+    evaluating each one independently misses the point. A model can achieve identical
+    per-variable RMSE to an independent baseline while capturing — or ignoring —
+    the physical coupling between variables. <strong>mvmetrics</strong> quantifies
+    that difference directly.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon fi-blue">🎯</div>
+        <h3>Detect dependence recovery</h3>
+        <p>Metric D's S_dep component measures the Frobenius distance between
+        observed and predicted PIT correlation matrices — directly quantifying
+        how well a model recovers cross-variable coupling.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-amber">⚖️</div>
+        <h3>CV-weighted importance</h3>
+        <p>The novel E-CVWMD metric assigns higher weight to variables with
+        greater relative variability (CV), reflecting that a 5% error on
+        solar radiation and on temperature are not equally consequential.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-green">📊</div>
+        <h3>Bootstrap uncertainty</h3>
+        <p>Non-parametric bootstrap CIs for all metrics distinguish real
+        performance differences from sampling noise. Non-overlapping intervals
+        give informal statistical evidence without strong distributional assumptions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-red">🤖</div>
+        <h3>Automatic recommendation</h3>
+        <p>The built-in decision tree detects scale heterogeneity, Metric A
+        flatness, and dependence signal to recommend the most informative
+        metric family for your specific data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK START -->
+<section>
+  <div class="container">
+    <p class="section-kicker">Quick Start</p>
+    <h2>One function, complete report</h2>
+    <p>Supply observed data, a list of prediction matrices, and draw arrays.
+       <code style="font-family:var(--mono);font-size:.9em">evaluate_models()</code>
+       handles the rest.</p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(event,'tab-basic')">Basic Usage</div>
+      <div class="tab" onclick="switchTab(event,'tab-install')">Installation</div>
+      <div class="tab" onclick="switchTab(event,'tab-individual')">Individual Metrics</div>
+    </div>
+
+    <div id="tab-basic" class="tab-panel active">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code><span class="section">── Setup ─────────────────────────────────────────</span>
+<span class="kw">library</span>(mvmetrics)
+
+<span class="comment"># obs      : [N x K] observed matrix  (4 continuous + 1 binary)</span>
+<span class="comment"># pred_list: named list of [N x K] prediction matrices</span>
+<span class="comment"># draws_list: named list of [N x K x B] draw arrays</span>
+<span class="section">── Evaluate ──────────────────────────────────────</span>
+report <span class="kw">&lt;-</span> <span class="fn">evaluate_models</span>(
+  <span class="arg">obs</span>        = obs,
+  <span class="arg">pred_list</span>  = <span class="fn">list</span>(M1 = pred_m1, M3 = pred_m3),
+  <span class="arg">draws_list</span> = <span class="fn">list</span>(M1 = draws_m1, M3 = draws_m3),
+  <span class="arg">mu_train</span>   = mu_real,   <span class="comment"># training means  → CV weights for Metric E</span>
+  <span class="arg">sd_train</span>   = sd_real,   <span class="comment"># training SDs</span>
+  <span class="arg">K_c</span>        = <span class="num">4</span>,         <span class="comment"># number of continuous variables</span>
+  <span class="arg">bootstrap</span>  = <span class="kw">TRUE</span>,
+  <span class="arg">B_boot</span>     = <span class="num">500</span>
+)
+<span class="section">── Output ────────────────────────────────────────</span>
+<span class="fn">print</span>(report)           <span class="comment"># scores + rankings + recommendation</span>
+<span class="fn">summary</span>(report)         <span class="comment"># compact summary</span>
+<span class="fn">plot_metrics</span>(report, <span class="arg">type</span> = <span class="str">"forest"</span>)  <span class="comment"># bootstrap CI forest plot</span>
+<span class="fn">plot_metrics</span>(report, <span class="arg">type</span> = <span class="str">"decomp"</span>)  <span class="comment"># S_marg vs S_dep stacked bars</span></code></pre>
+      </div>
+    </div>
+
+    <div id="tab-install" class="tab-panel">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code><span class="comment"># Option 1 — from GitHub (recommended)</span>
+<span class="fn">install.packages</span>(<span class="str">"devtools"</span>)
+devtools::<span class="fn">install_github</span>(<span class="str">"darango/mvmetrics"</span>)
+
+<span class="comment"># Option 2 — from local source</span>
+devtools::<span class="fn">document</span>(<span class="str">"path/to/mvmetrics"</span>)
+devtools::<span class="fn">install</span>(<span class="str">"path/to/mvmetrics"</span>)
+
+<span class="comment"># Suggested dependencies for full functionality</span>
+<span class="fn">install.packages</span>(<span class="fn">c</span>(<span class="str">"energy"</span>, <span class="str">"ggplot2"</span>, <span class="str">"MASS"</span>))</code></pre>
+      </div>
+    </div>
+
+    <div id="tab-individual" class="tab-panel">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code><span class="comment"># Marginal metrics per variable</span>
+<span class="fn">marginal_rmse</span>(obs[, <span class="num">1</span>:<span class="num">4</span>], pred[, <span class="num">1</span>:<span class="num">4</span>])
+<span class="fn">marginal_logloss</span>(obs[, <span class="num">5</span>], pred[, <span class="num">5</span>])
+
+<span class="comment"># Normalise before Metrics B and C</span>
+obs_norm <span class="kw">&lt;-</span> <span class="fn">normalise_matrix</span>(obs[, <span class="num">1</span>:<span class="num">4</span>], mu_train, sd_train)
+
+<span class="comment"># Metric B — Energy Score (strictly proper)</span>
+<span class="fn">metric_B_energy_score</span>(obs_norm, draws_norm)
+
+<span class="comment"># Metric D — MDD decomposition, alpha sensitivity</span>
+<span class="kw">for</span> (a <span class="kw">in</span> <span class="fn">c</span>(<span class="num">0.3</span>, <span class="num">0.5</span>, <span class="num">0.7</span>)) {
+  res <span class="kw">&lt;-</span> <span class="fn">metric_D_mdd</span>(obs, pred, draws, <span class="arg">K_c</span>=<span class="num">4</span>, <span class="arg">alpha</span>=a)
+  <span class="fn">cat</span>(res$S_dep, <span class="str">"\n"</span>)
+}
+
+<span class="comment"># Metric E — E-CVWMD (novel, CV-weighted)</span>
+<span class="fn">metric_E_cvwmd</span>(obs, pred, draws,
+               <span class="arg">mu_train</span> = mu_real, <span class="arg">sd_train</span> = sd_real,
+               <span class="arg">K_c</span> = <span class="num">4</span>, <span class="arg">run_dcor</span> = <span class="kw">TRUE</span>)</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCTION REFERENCE -->
+<section>
+  <div class="container">
+    <p class="section-kicker">Reference</p>
+    <h2>Exported functions</h2>
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Function</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="reference/evaluate_models.html">evaluate_models()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Main wrapper. Computes all metrics A–E, rankings, recommendation, and optional bootstrap CIs.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/metric_A.html">metric_A()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Metric A: Weighted sum of marginal scores (RMSE + Log-Loss). Marginal baseline.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/metric_B_energy_score.html">metric_B_energy_score()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Metric B: Multivariate Energy Score. Strictly proper; sensitive to joint distribution.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/metric_C_variogram_score.html">metric_C_variogram_score()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Metric C: Variogram Score (order p=0.5). Proper; directly penalises covariance errors.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/metric_D_mdd.html">metric_D_mdd()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Metric D: Marginal-Dependence Decomposition. Separates S_marg from S_dep via PIT correlations.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/metric_E_cvwmd.html">metric_E_cvwmd()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td><strong>Novel.</strong> Metric E: E-CVWMD with CV-derived weights and adaptive α* via distance correlation test.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/bootstrap_metrics.html">bootstrap_metrics()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Non-parametric bootstrap for 95% percentile CIs and pairwise CI overlap test.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/plot_metrics.html">plot_metrics()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Four plot types: bars, forest, heatmap, decomp. Requires ggplot2.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/normalise_matrix.html">normalise_matrix()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Column-wise z-score normalisation. Required before Metrics B and C.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/marginal_rmse.html">marginal_rmse()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>RMSE per variable (named vector).</td>
+        </tr>
+        <tr>
+          <td><a href="reference/marginal_logloss.html">marginal_logloss()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Binary cross-entropy Log-Loss.</td>
+        </tr>
+        <tr>
+          <td><a href="reference/recommend_metric.html">recommend_metric()</a></td>
+          <td><span class="badge-type bt-fn">function</span></td>
+          <td>Rule-based metric recommendation engine. Called automatically by evaluate_models().</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CITATION -->
+<section>
+  <div class="container">
+    <p class="section-kicker">Citation</p>
+    <h2>How to cite</h2>
+    <div class="citation-box">
+      <strong>BibTeX</strong>
+<pre style="font-family:var(--mono);font-size:.82rem;line-height:1.8;white-space:pre-wrap">@phdthesis{arangolondono2026,
+  author  = {Arango Londo{\~{n}}o, David},
+  title   = {Joint Modeling of Precipitation and Temperature in Colombia
+             for Daily Series Reconstruction and Subseasonal Forecasting
+             Using Generalized Mixed Models},
+  school  = {Universidad Nacional de Colombia},
+  year    = {2026},
+  note    = {R package mvmetrics, v0.1.0}
+}</pre>
+    </div>
+    <div class="citation-box" style="margin-top:1rem">
+      <strong>R Citation</strong>
+      <code>citation("mvmetrics")</code>
+    </div>
+  </div>
+</section>
+
+<!-- NEWS -->
+<section>
+  <div class="container">
+    <p class="section-kicker">News</p>
+    <h2>Changelog</h2>
+    <div class="news-item">
+      <div class="news-version">mvmetrics 0.1.0</div>
+      <div class="news-date">April 2026 — Initial release</div>
+      <ul>
+        <li>Five metric families (A–E) with full roxygen2 documentation.</li>
+        <li>Novel E-CVWMD (Metric E) with CV-derived weights and adaptive α*.</li>
+        <li><code>evaluate_models()</code> wrapper with automatic ranking and recommendation.</li>
+        <li>Non-parametric bootstrap CIs via <code>bootstrap_metrics()</code>.</li>
+        <li>Four ggplot2 plot types: bars, forest, heatmap, decomp.</li>
+        <li>20+ unit tests via testthat.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="pkg-name">mvmetrics</div>
+      <p>Joint Performance Metrics for Mixed-Type Multivariate Responses</p>
+      <p style="margin-top:.5rem">David Arango Londoño · Universidad Nacional de Colombia</p>
+    </div>
+    <div class="footer-links">
+      <a href="articles/get-started.html">Get Started</a>
+      <a href="reference/index.html">Reference</a>
+      <a href="articles/theory.html">Theory</a>
+      <a href="https://github.com/darango/mvmetrics">GitHub</a>
+      <a href="news/index.html">News</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function switchTab(e, id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+function copyCode(btn) {
+  const code = btn.nextElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+function copyInstall(el) {
+  const text = `devtools::install_github("darango/mvmetrics")`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.querySelector('.hero-copy');
+    btn.textContent = '✓ copied';
+    setTimeout(() => btn.textContent = '⎘ copy', 1500);
+  });
+}
+</script>
+</body>
+</html>

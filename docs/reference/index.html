@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Function Reference — mvmetrics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared.css">
+<style>
+  .ref-section { margin-bottom: 2.5rem; }
+  .ref-section h3 { font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: .75rem;
+    padding-bottom: .4rem; border-bottom: 1px solid var(--border); }
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 1rem; }
+  .ref-card { border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1rem 1.2rem; transition: box-shadow .15s, border-color .15s; }
+  .ref-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+  .ref-card .fn { font-family: var(--mono); font-size: .88rem; color: var(--accent);
+    font-weight: 500; margin-bottom: .35rem; }
+  .ref-card a { text-decoration: none; color: inherit; }
+  .ref-card p { font-size: .83rem; color: var(--ink-soft); margin: 0; }
+  .novel-tag { display: inline-block; background: rgba(192,57,43,.1); color: var(--accent2);
+    font-family: var(--mono); font-size: .65rem; padding: .1rem .4rem;
+    border-radius: 3px; margin-left: .4rem; vertical-align: middle; }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="../index.html"><span>mvmetrics</span><span class="pkg-badge">v0.1.0</span></a>
+  <div class="nav-links">
+    <a href="../index.html">Home</a>
+    <a href="../articles/get-started.html">Get Started</a>
+    <a href="index.html" class="active">Reference</a>
+    <a href="../articles/theory.html">Theory</a>
+    <a href="../news/index.html">News</a>
+  </div>
+  <a class="nav-gh" href="https://github.com/darango/mvmetrics" target="_blank">GitHub</a>
+</nav>
+
+<div style="max-width:1100px;margin:0 auto;padding:3rem 2rem">
+  <p class="art-kicker">Reference</p>
+  <h1 style="font-family:var(--serif);font-size:2rem;font-weight:400;margin-bottom:2rem">Function Reference</h1>
+
+  <!-- MAIN WRAPPER -->
+  <div class="ref-section">
+    <h3>Main wrapper</h3>
+    <div class="ref-grid">
+      <div class="ref-card">
+        <a href="evaluate_models.html">
+          <div class="fn">evaluate_models()</div>
+          <p>Evaluate multiple models with all metric families A–E. Returns scores, rankings, recommendation, and optional bootstrap CIs.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- METRIC FAMILIES -->
+  <div class="ref-section">
+    <h3>Metric families</h3>
+    <div class="ref-grid">
+      <div class="ref-card">
+        <a href="metric_A.html">
+          <div class="fn">metric_A()</div>
+          <p>Family A — Weighted marginal sum of RMSE (continuous) + Log-Loss (binary). Marginal baseline, blind to dependence.</p>
+        </a>
+      </div>
+      <div class="ref-card">
+        <a href="metric_B_energy_score.html">
+          <div class="fn">metric_B_energy_score()</div>
+          <p>Family B — Multivariate Energy Score. Strictly proper, sensitive to joint distribution. Requires normalised inputs.</p>
+        </a>
+      </div>
+      <div class="ref-card">
+        <a href="metric_C_variogram_score.html">
+          <div class="fn">metric_C_variogram_score()</div>
+          <p>Family C — Variogram Score (p = 0.5). Proper, directly penalises pairwise covariance errors. Robustness check.</p>
+        </a>
+      </div>
+      <div class="ref-card">
+        <a href="metric_D_mdd.html">
+          <div class="fn">metric_D_mdd()</div>
+          <p>Family D — Marginal-Dependence Decomposition. Separates S_marg from S_dep via PIT correlation matrices.</p>
+        </a>
+      </div>
+      <div class="ref-card" style="border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.02)">
+        <a href="metric_E_cvwmd.html">
+          <div class="fn">metric_E_cvwmd() <span class="novel-tag">novel</span></div>
+          <p>Family E — E-CVWMD. CV-derived variable weights, residual-correlation dependence score, adaptive α* via distance correlation test.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARGINAL METRICS -->
+  <div class="ref-section">
+    <h3>Marginal (univariate) metrics</h3>
+    <div class="ref-grid">
+      <div class="ref-card"><a href="marginal_rmse.html">
+        <div class="fn">marginal_rmse()</div>
+        <p>RMSE per column (named vector).</p>
+      </a></div>
+      <div class="ref-card"><a href="marginal_mae.html">
+        <div class="fn">marginal_mae()</div>
+        <p>MAE per column (named vector).</p>
+      </a></div>
+      <div class="ref-card"><a href="marginal_logloss.html">
+        <div class="fn">marginal_logloss()</div>
+        <p>Binary cross-entropy Log-Loss for predicted probabilities.</p>
+      </a></div>
+      <div class="ref-card"><a href="marginal_accuracy.html">
+        <div class="fn">marginal_accuracy()</div>
+        <p>Classification accuracy at threshold 0.5.</p>
+      </a></div>
+    </div>
+  </div>
+
+  <!-- UNCERTAINTY -->
+  <div class="ref-section">
+    <h3>Uncertainty quantification</h3>
+    <div class="ref-grid">
+      <div class="ref-card"><a href="bootstrap_metrics.html">
+        <div class="fn">bootstrap_metrics()</div>
+        <p>Non-parametric percentile bootstrap for 95% CIs. Pairwise CI overlap test for exactly two models.</p>
+      </a></div>
+    </div>
+  </div>
+
+  <!-- VISUALISATION -->
+  <div class="ref-section">
+    <h3>Visualisation</h3>
+    <div class="ref-grid">
+      <div class="ref-card"><a href="plot_metrics.html">
+        <div class="fn">plot_metrics()</div>
+        <p>Four types: <code>bars</code>, <code>forest</code>, <code>heatmap</code>, <code>decomp</code>. Returns a ggplot2 object.</p>
+      </a></div>
+    </div>
+  </div>
+
+  <!-- UTILITIES -->
+  <div class="ref-section">
+    <h3>Utilities</h3>
+    <div class="ref-grid">
+      <div class="ref-card"><a href="normalise_matrix.html">
+        <div class="fn">normalise_matrix()</div>
+        <p>Column-wise z-score normalisation using training-set parameters. Required before Metrics B and C.</p>
+      </a></div>
+      <div class="ref-card"><a href="recommend_metric.html">
+        <div class="fn">recommend_metric()</div>
+        <p>Rule-based metric recommendation. Called automatically by evaluate_models().</p>
+      </a></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div><div class="pkg-name">mvmetrics</div>
+      <p>David Arango Londoño · Universidad Nacional de Colombia · 2026</p></div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../articles/get-started.html">Get Started</a>
+      <a href="https://github.com/darango/mvmetrics">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

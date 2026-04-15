@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get Started — mvmetrics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared.css">
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="../index.html">
+    <span>mvmetrics</span><span class="pkg-badge">v0.1.0</span>
+  </a>
+  <div class="nav-links">
+    <a href="../index.html">Home</a>
+    <a href="get-started.html" class="active">Get Started</a>
+    <a href="../reference/index.html">Reference</a>
+    <a href="theory.html">Theory</a>
+    <a href="../news/index.html">News</a>
+  </div>
+  <a class="nav-gh" href="https://github.com/darango/mvmetrics" target="_blank">GitHub</a>
+</nav>
+
+<div class="article-layout">
+  <aside class="sidebar">
+    <p class="sidebar-head">On this page</p>
+    <ul>
+      <li><a href="#install">Installation</a></li>
+      <li><a href="#data">Data requirements</a></li>
+      <li><a href="#simulate">Simulated example</a></li>
+      <li><a href="#evaluate">evaluate_models()</a></li>
+      <li><a href="#output">Reading the output</a></li>
+      <li><a href="#plots">Plots</a></li>
+      <li><a href="#individual">Individual functions</a></li>
+      <li><a href="#bootstrap">Bootstrap CIs</a></li>
+    </ul>
+  </aside>
+
+  <article class="article-body">
+    <p class="art-kicker">Articles · Get Started</p>
+    <h1>Getting started with mvmetrics</h1>
+    <p class="lead">This vignette walks through a complete evaluation workflow
+    using simulated hydroclimatic data calibrated to the Valle del Cauca
+    parameters from Arango Londoño (2026).</p>
+
+    <h2 id="install">Installation</h2>
+    <div class="code-block">
+<pre><code><span class="comment"># From GitHub</span>
+<span class="fn">install.packages</span>(<span class="str">"devtools"</span>)
+devtools::<span class="fn">install_github</span>(<span class="str">"darango/mvmetrics"</span>)
+
+<span class="comment"># Suggested packages</span>
+<span class="fn">install.packages</span>(<span class="fn">c</span>(<span class="str">"energy"</span>, <span class="str">"ggplot2"</span>, <span class="str">"MASS"</span>))
+<span class="kw">library</span>(mvmetrics)</code></pre>
+    </div>
+
+    <h2 id="data">Data requirements</h2>
+    <p>All functions expect three core objects:</p>
+    <table class="ref-table" style="margin-top:1rem">
+      <thead><tr><th>Object</th><th>Dimensions</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>obs</td><td>[N × K]</td><td>Observed values. Columns 1:K_c = continuous; column K = binary (0/1).</td></tr>
+        <tr><td>pred</td><td>[N × K]</td><td>Point predictions. Binary column = predicted probability ∈ (0,1).</td></tr>
+        <tr><td>draws</td><td>[N × K × B]</td><td>Posterior predictive draws. B = number of samples per observation.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout callout-info">
+      <strong>Scale contract for Metric E:</strong> <code>obs</code>, <code>pred</code>, and
+      <code>draws</code> must be in the <strong>original physical scale</strong> (not normalised).
+      Metrics B and C require normalised inputs — <code>normalise_matrix()</code> handles this
+      internally when called through <code>evaluate_models()</code>.
+    </div>
+
+    <h2 id="simulate">Simulated example</h2>
+    <p>The following generates data for K = 5 variables (Tmin, Tmax, HR, Rad, Pbin)
+    with a Clausius-Clapeyron correlation structure, two competing models, and
+    B = 50 posterior draws.</p>
+    <div class="code-block">
+<pre><code><span class="kw">library</span>(MASS); <span class="fn">set.seed</span>(<span class="num">2026</span>)
+N <span class="kw">&lt;-</span> <span class="num">500</span>; K <span class="kw">&lt;-</span> <span class="num">5</span>; K_c <span class="kw">&lt;-</span> <span class="num">4</span>; B <span class="kw">&lt;-</span> <span class="num">50</span>
+
+<span class="comment"># Empirical parameters (Chapter 7, Valle del Cauca)</span>
+mu_real <span class="kw">&lt;-</span> <span class="fn">c</span>(Tmin=<span class="num">18.9</span>, Tmax=<span class="num">30.6</span>, HR=<span class="num">80.7</span>, Rad=<span class="num">3.8</span>)
+sd_real <span class="kw">&lt;-</span> <span class="fn">c</span>(Tmin=<span class="num">2.5</span>,  Tmax=<span class="num">4.0</span>,  HR=<span class="num">8.0</span>,  Rad=<span class="num">0.8</span>)
+
+<span class="comment"># Clausius-Clapeyron residual correlation (positive-definite)</span>
+R_cont <span class="kw">&lt;-</span> <span class="fn">matrix</span>(<span class="fn">c</span>(
+   <span class="num">1.000</span>,  <span class="num">0.310</span>, <span class="num">-0.220</span>, <span class="num">-0.180</span>,
+   <span class="num">0.310</span>,  <span class="num">1.000</span>, <span class="num">-0.505</span>, <span class="num">-0.535</span>,
+  <span class="num">-0.220</span>, <span class="num">-0.505</span>,  <span class="num">1.000</span>,  <span class="num">0.420</span>,
+  <span class="num">-0.180</span>, <span class="num">-0.535</span>,  <span class="num">0.420</span>,  <span class="num">1.000</span>),
+  <span class="arg">nrow</span>=<span class="num">4</span>, <span class="arg">byrow</span>=<span class="kw">TRUE</span>)
+
+<span class="comment"># See use_simulation.R (included in package) for the full simulation</span></code></pre>
+    </div>
+
+    <h2 id="evaluate">evaluate_models()</h2>
+    <p>The main wrapper accepts a named list of models and returns a structured report.</p>
+    <div class="code-block">
+<pre><code>report <span class="kw">&lt;-</span> <span class="fn">evaluate_models</span>(
+  <span class="arg">obs</span>        = obs,
+  <span class="arg">pred_list</span>  = <span class="fn">list</span>(M1 = pred_m1, M3 = pred_m3),
+  <span class="arg">draws_list</span> = <span class="fn">list</span>(M1 = draws_m1, M3 = draws_m3),
+  <span class="arg">mu_train</span>   = mu_real,   <span class="comment"># training means  (Metric E CV weights)</span>
+  <span class="arg">sd_train</span>   = sd_real,   <span class="comment"># training SDs    (Metric E normalisation)</span>
+  <span class="arg">K_c</span>        = <span class="num">4</span>,
+  <span class="arg">alpha_D</span>    = <span class="num">0.5</span>,       <span class="comment"># marginal/dependence weight for Metric D</span>
+  <span class="arg">alpha_E</span>    = <span class="kw">NULL</span>,      <span class="comment"># NULL = adaptive alpha* via dcor test</span>
+  <span class="arg">run_dcor</span>   = <span class="kw">FALSE</span>,     <span class="comment"># TRUE for final analyses</span>
+  <span class="arg">bootstrap</span>  = <span class="kw">TRUE</span>,
+  <span class="arg">B_boot</span>     = <span class="num">500</span>,       <span class="comment"># 200 for quick runs, 500 for publication</span>
+  <span class="arg">verbose</span>    = <span class="kw">TRUE</span>
+)</code></pre>
+    </div>
+
+    <h2 id="output">Reading the output</h2>
+    <p>The returned <code>mvmetrics_report</code> object has five slots:</p>
+    <table class="ref-table" style="margin-top:1rem">
+      <thead><tr><th>Slot</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>$scores</td><td>data.frame — one row per model, columns for each metric (A, B, C, D, D_marg, D_dep, E, E_marg, E_dep, E_alpha_star)</td></tr>
+        <tr><td>$rankings</td><td>data.frame — rank per model per metric (1 = best = lowest score)</td></tr>
+        <tr><td>$recommendation</td><td>character — recommended metric family with rationale</td></tr>
+        <tr><td>$bootstrap_ci</td><td>data.frame — 95% CIs and CI overlap indicator (NULL if bootstrap=FALSE)</td></tr>
+        <tr><td>$marginal_detail</td><td>list — per-variable RMSE, Log-Loss, Accuracy for each model</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="plots">Visualisation</h2>
+    <div class="code-block">
+<pre><code><span class="comment"># Side-by-side bars for all metrics</span>
+<span class="fn">plot_metrics</span>(report, <span class="arg">type</span> = <span class="str">"bars"</span>)
+
+<span class="comment"># Bootstrap forest plot (requires bootstrap=TRUE)</span>
+<span class="fn">plot_metrics</span>(report, <span class="arg">type</span> = <span class="str">"forest"</span>,
+             <span class="arg">metrics</span> = <span class="fn">c</span>(<span class="str">"A"</span>,<span class="str">"B"</span>,<span class="str">"D"</span>,<span class="str">"D_dep"</span>,<span class="str">"E"</span>,<span class="str">"E_dep"</span>))
+
+<span class="comment"># Ranking heatmap</span>
+<span class="fn">plot_metrics</span>(report, <span class="arg">type</span> = <span class="str">"heatmap"</span>)
+
+<span class="comment"># S_marg vs S_dep stacked bars (Metrics D and E)</span>
+<span class="fn">plot_metrics</span>(report, <span class="arg">type</span> = <span class="str">"decomp"</span>)</code></pre>
+    </div>
+
+    <h2 id="individual">Individual metric functions</h2>
+    <div class="code-block">
+<pre><code><span class="comment"># RMSE per variable (named vector)</span>
+<span class="fn">marginal_rmse</span>(obs[,<span class="num">1</span>:<span class="num">4</span>], pred[,<span class="num">1</span>:<span class="num">4</span>])
+
+<span class="comment"># Metric D alpha sensitivity</span>
+<span class="kw">for</span> (a <span class="kw">in</span> <span class="fn">c</span>(<span class="num">0.2</span>, <span class="num">0.5</span>, <span class="num">0.8</span>)) {
+  res <span class="kw">&lt;-</span> <span class="fn">metric_D_mdd</span>(obs, pred, draws, <span class="arg">K_c</span>=<span class="num">4</span>, <span class="arg">alpha</span>=a)
+  <span class="fn">cat</span>(<span class="fn">sprintf</span>(<span class="str">"alpha=%.1f  S_dep=%.4f\n"</span>, a, res$S_dep))
+}
+
+<span class="comment"># Metric E — inspect CV weights and adaptive alpha*</span>
+res_E <span class="kw">&lt;-</span> <span class="fn">metric_E_cvwmd</span>(obs, pred, draws,
+  <span class="arg">mu_train</span>=mu_real, <span class="arg">sd_train</span>=sd_real, <span class="arg">K_c</span>=<span class="num">4</span>)
+res_E$w_cont     <span class="comment"># CV-derived weights per continuous variable</span>
+res_E$alpha_star <span class="comment"># adaptive alpha* (0.5 if dcor not significant)</span>
+res_E$S_E_dep    <span class="comment"># dependence score</span></code></pre>
+    </div>
+
+    <h2 id="bootstrap">Bootstrap confidence intervals</h2>
+    <p>When <code>bootstrap=TRUE</code>, <code>evaluate_models()</code> calls
+    <code>bootstrap_metrics()</code> internally. For two models, a pairwise
+    CI overlap test is computed automatically.</p>
+    <div class="callout callout-tip">
+      <strong>Interpretation:</strong> Non-overlapping 95% CIs for S_dep
+      (Metric D) and S_E_dep (Metric E) provide informal evidence that the
+      dependence recovery difference is statistically distinguishable at the
+      available sample size — without assuming distributional form.
+    </div>
+    <div class="code-block">
+<pre><code><span class="comment"># Access CI table directly</span>
+report$bootstrap_ci[, <span class="fn">c</span>(<span class="str">"Model"</span>,<span class="str">"Metric"</span>,<span class="str">"CI_lo"</span>,<span class="str">"CI_hi"</span>,<span class="str">"CIs_overlap"</span>)]
+
+<span class="comment"># Run bootstrap standalone (e.g. for more resamples)</span>
+ci_tbl <span class="kw">&lt;-</span> <span class="fn">bootstrap_metrics</span>(
+  obs, pred_list, draws_list,
+  <span class="arg">mu_train</span>=mu_real, <span class="arg">sd_train</span>=sd_real,
+  <span class="arg">K_c</span>=<span class="num">4</span>, <span class="arg">B_boot</span>=<span class="num">1000</span>
+)</code></pre>
+    </div>
+
+  </article>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="pkg-name">mvmetrics</div>
+      <p>David Arango Londoño · Universidad Nacional de Colombia · 2026</p>
+    </div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../reference/index.html">Reference</a>
+      <a href="https://github.com/darango/mvmetrics">GitHub</a>
+    </div>
+  </div>
+</footer>
+<script src="../shared.js"></script>
+</body>
+</html>
