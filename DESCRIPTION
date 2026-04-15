@@ -1,0 +1,40 @@
+Package: mvmetrics
+Type: Package
+Title: Joint Performance Metrics for Mixed-Type Multivariate Responses
+Version: 0.1.0
+Date: 2026-04-14
+Authors@R: person("David", "Arango Londoño",
+    email = "darango@unal.edu.co",
+    role  = c("aut", "cre"),
+    comment = c(ORCID = "0000-0000-0000-0000"))
+Description: Provides a unified framework for evaluating joint predictive
+    performance of models with mixed-type multivariate responses (continuous
+    and binary). Implements five metric families: (A) Weighted Marginal Sum,
+    (B) Multivariate Energy Score, (C) Variogram Score, (D) Marginal-Dependence
+    Decomposition (MDD), and (E) Enhanced CV-Weighted Marginal-Dependence
+    (E-CVWMD). The novel E-CVWMD metric assigns variable weights proportional
+    to the coefficient of variation, computes a residual-correlation dependence
+    score, and calibrates the marginal/dependence trade-off via a multivariate
+    independence test. A single wrapper function accepts observed and predicted
+    matrices for multiple models and returns a comprehensive report with rankings
+    and metric recommendations. Bootstrap uncertainty quantification is included.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Depends:
+    R (>= 4.0.0)
+Imports:
+    stats,
+    utils,
+    methods
+Suggests:
+    energy (>= 1.7.10),
+    ggplot2 (>= 3.4.0),
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+URL: https://github.com/darango/mvmetrics
+BugReports: https://github.com/darango/mvmetrics/issues
